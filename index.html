@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Óscar Mena | Barbería Vila-real</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root { --dorado: #c5a059; --negro: #121212; --gris: #1a1a1a; --blanco: #ffffff; }
+        body { font-family: 'Poppins', sans-serif; background: var(--negro); color: var(--blanco); margin: 0; padding: 0; scroll-behavior: smooth; text-align: center; }
+        
+        header { padding: 50px 20px 10px; }
+        .logo-box h1 { font-family: 'Playfair Display', serif; font-size: 2.8rem; color: var(--dorado); margin: 0; text-transform: uppercase; letter-spacing: 4px; }
+        
+        .reserva-container { padding: 30px 20px; }
+        .btn-principal { background: var(--dorado); color: #000; padding: 18px 50px; font-weight: bold; border: none; cursor: pointer; font-size: 1.1rem; letter-spacing: 2px; transition: 0.3s; }
+        .btn-principal:hover { background: #fff; }
+
+        #reserva-desplegable { display: none; max-width: 800px; margin: 20px auto; background: var(--gris); padding: 25px; border: 1px solid var(--dorado); text-align: left; animation: fadeIn 0.4s; }
+        
+        .month-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .month-btn { background: none; border: 1px solid var(--dorado); color: var(--dorado); cursor: pointer; padding: 5px 10px; }
+
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+        .day { padding: 12px 5px; background: #222; text-align: center; cursor: pointer; font-size: 0.9rem; }
+        .day.selected { background: var(--dorado); color: #000; font-weight: bold; }
+        .day.disabled { opacity: 0.1; cursor: not-allowed; }
+        .day-header { color: var(--dorado); font-weight: bold; text-align: center; font-size: 0.7rem; opacity: 0.6; }
+
+        .hours-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); gap: 8px; margin-top: 20px; }
+        .hour-card { padding: 10px; background: #111; border: 1px solid #333; text-align: center; cursor: pointer; font-size: 0.85rem; }
+        .hour-card.booked { background: #311; color: #f66; opacity: 0.4; cursor: not-allowed; border-color: #522; }
+
+        #bookingForm { display: none; margin-top: 25px; border-top: 1px solid #333; padding-top: 20px; }
+        .srv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .srv-item { background: #111; padding: 10px; border: 1px solid #333; display: flex; align-items: center; gap: 8px; font-size: 0.9rem; cursor: pointer; }
+        input[type="text"], input[type="tel"] { width: 100%; padding: 12px; margin-bottom: 10px; background: #000; border: 1px solid #333; color: #fff; box-sizing: border-box; }
+
+        .galeria { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; padding: 40px 20px; max-width: 1200px; margin: auto; }
+        .galeria img { width: 100%; height: 350px; object-fit: cover; border: 1px solid #333; transition: 0.3s; }
+        .galeria img:hover { border-color: var(--dorado); }
+
+        /* SECCIÓN MAPA */
+        .mapa-seccion { padding: 60px 20px; background: #000; }
+        .map-container { max-width: 1000px; margin: 20px auto; border: 1px solid var(--dorado); height: 450px; }
+        .map-container iframe { width: 100%; height: 100%; border: none; }
+
+        footer { padding: 40px; opacity: 0.5; font-size: 0.8rem; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-box">
+            <h1>Óscar Mena</h1>
+            <p>VILA-REAL</p>
+        </div>
+    </header>
+
+    <section class="reserva-container">
+        <button class="btn-principal" onclick="toggleReserva()">RESERVAR CITA</button>
+        
+        <div id="reserva-desplegable">
+            <div class="month-controls">
+                <button class="month-btn" onclick="changeMonth(-1)">ANTERIOR</button>
+                <h3 id="monthDisplay" style="margin:0; color:var(--dorado); font-family:'Playfair Display';"></h3>
+                <button class="month-btn" onclick="changeMonth(1)">SIGUIENTE</button>
+            </div>
+            <div class="calendar-grid" id="daysGrid"></div>
+            <div id="hoursPanel" style="display:none; margin-top:30px;">
+                <h4 id="selectedDateText" style="color:var(--dorado); margin-bottom:10px;"></h4>
+                <div id="hoursGrid" class="hours-grid"></div>
+            </div>
+            <div id="bookingForm">
+                <h4 style="margin-top:0">Selecciona servicios:</h4>
+                <div class="srv-grid">
+                    <label class="srv-item"><input type="checkbox" class="srv" value="Corte" data-time="20" onchange="actualizarTiempos()"> Corte (20')</label>
+                    <label class="srv-item"><input type="checkbox" class="srv" value="Barba" data-time="10" onchange="actualizarTiempos()"> Barba (10')</label>
+                    <label class="srv-item"><input type="checkbox" class="srv" value="Cejas" data-time="10" onchange="actualizarTiempos()"> Cejas (10')</label>
+                    <label class="srv-item"><input type="checkbox" class="srv" value="Tinte" data-time="40" onchange="actualizarTiempos()"> Tinte (40')</label>
+                </div>
+                <p id="totalInfo" style="font-size:0.8rem; color:var(--dorado)"></p>
+                <input type="text" id="clientName" placeholder="Tu nombre">
+                <input type="tel" id="clientPhone" placeholder="Tu teléfono">
+                <button class="btn-principal" style="width:100%" onclick="saveBooking()">CONFIRMAR CITA</button>
+            </div>
+        </div>
+    </section>
+
+    <section class="galeria">
+        <img src="https://i.ibb.co/ccw9FbwQ/Imagen1.jpg" alt="Imagen 1">
+        <img src="https://i.ibb.co/hxKzfRGH/Imagen2.jpg" alt="Imagen 2">
+        <img src="https://i.ibb.co/0p3PQhGh/Imagen3.jpg" alt="Imagen 3">
+        <img src="https://i.ibb.co/99vHQKd6/Imagen4.jpg" alt="Imagen 4">
+    </section>
+
+    <section class="mapa-seccion">
+        <h2 style="font-family:'Playfair Display'; color:var(--dorado)">Ubicación</h2>
+        <p>Carrer Borriol, 71, 12540 Vila-real, Castelló</p>
+        <div class="map-container">
+            <iframe 
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3056.883770451996!2d-0.10398322345672626!3d39.94396497151978!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd60071835cdcf35%3A0x27973bd07480e9b9!2sPeluqueria%20oscar%20mena%20marcando%20estilo!5e0!3m2!1ses!2ses!4v1710000000000!5m2!1ses!2ses" 
+                allowfullscreen="" 
+                loading="lazy" 
+                referrerpolicy="no-referrer-when-downgrade">
+            </iframe>
+        </div>
+    </section>
+
+    <footer>
+        <button onclick="unlockAdmin()" style="background:none; border:none; color:#444; cursor:pointer;">Panel Óscar</button>
+        <div id="adminPanel" style="display:none; background:#fff; color:#000; padding:20px; margin-top:20px; text-align:left; border-radius:5px; max-width:600px; margin:auto;">
+            <h3>Agenda de Citas</h3>
+            <div id="adminList"></div>
+        </div>
+        <p>© 2026 Óscar Mena Vila-real</p>
+    </footer>
+
+    <script>
+        // Lógica de reserva y calendario (Mismo funcionamiento de 10 min)
+        let currentDate = new Date();
+        let currentDay, currentMonth, currentYear, currentDow, selectedStartHour;
+        const ADMIN_PASS = "corte de pelo";
+
+        function toggleReserva() {
+            const div = document.getElementById('reserva-desplegable');
+            div.style.display = (div.style.display === 'block') ? 'none' : 'block';
+            if(div.style.display === 'block') { renderCalendar(); div.scrollIntoView({behavior:'smooth'}); }
+        }
+
+        function timeToMins(t) { const [h, m] = t.split(':').map(Number); return h * 60 + m; }
+
+        function generateSlots(dow) {
+            let slots = [];
+            let ranges = (dow === 6) ? [{s:10, e:14}] : [{s:10, e:13.5}, {s:17, e:19.5}];
+            ranges.forEach(r => {
+                for(let m = r.s*60; m < r.e*60; m+=10) {
+                    let h = Math.floor(m/60);
+                    let mins = m%60;
+                    slots.push(`${h}:${mins.toString().padStart(2,'0')}`);
+                }
+            });
+            return slots;
+        }
+
+        function renderCalendar() {
+            const grid = document.getElementById('daysGrid');
+            grid.innerHTML = '<div class="day-header">LUN</div><div class="day-header">MAR</div><div class="day-header">MIÉ</div><div class="day-header">JUE</div><div class="day-header">VIE</div><div class="day-header">SÁB</div><div class="day-header">DOM</div>';
+            const y = currentDate.getFullYear();
+            const m = currentDate.getMonth();
+            const first = new Date(y, m, 1).getDay();
+            const days = new Date(y, m+1, 0).getDate();
+            const start = (first === 0) ? 7 : first;
+
+            document.getElementById('monthDisplay').innerText = new Intl.DateTimeFormat('es-ES',{month:'long', year:'numeric'}).format(currentDate);
+            for(let i=1; i<start; i++) grid.appendChild(document.createElement('div'));
+            for(let d=1; d<=days; d++) {
+                const div = document.createElement('div');
+                div.className = 'day';
+                const dow = new Date(y, m, d).getDay();
+                if(dow === 0 || dow === 1) div.classList.add('disabled');
+                else div.onclick = () => selectDay(d, m, y, dow, div);
+                div.innerText = d;
+                grid.appendChild(div);
+            }
+        }
+
+        function selectDay(d, m, y, dow, el) {
+            document.querySelectorAll('.day').forEach(x => x.classList.remove('selected'));
+            el.classList.add('selected');
+            currentDay = d; currentMonth = m; currentYear = y; currentDow = dow;
+            document.getElementById('hoursPanel').style.display = 'block';
+            document.getElementById('bookingForm').style.display = 'none';
+            document.getElementById('selectedDateText').innerText = `Día ${d}`;
+            renderHours();
+        }
+
+        function renderHours() {
+            const grid = document.getElementById('hoursGrid');
+            grid.innerHTML = '';
+            const bks = JSON.parse(localStorage.getItem('oscar_mena_v9') || '[]');
+            const dayBks = bks.filter(b => b.day === currentDay && b.month === currentMonth && b.year === currentYear);
+            
+            generateSlots(currentDow).forEach(slot => {
+                const sMins = timeToMins(slot);
+                const isOcc = dayBks.some(b => sMins >= timeToMins(b.hour) && sMins < (timeToMins(b.hour) + b.duration));
+                const card = document.createElement('div');
+                card.className = `hour-card ${isOcc ? 'booked' : ''}`;
+                card.innerText = slot;
+                if(!isOcc) card.onclick = () => {
+                    selectedStartHour = slot;
+                    document.getElementById('bookingForm').style.display = 'block';
+                };
+                grid.appendChild(card);
+            });
+        }
+
+        function actualizarTiempos() {
+            let total = 0;
+            document.querySelectorAll('.srv:checked').forEach(s => total += parseInt(s.dataset.time));
+            document.getElementById('totalInfo').innerText = total > 0 ? `Duración total: ${total} min` : "";
+        }
+
+        function saveBooking() {
+            const name = document.getElementById('clientName').value;
+            const phone = document.getElementById('clientPhone').value;
+            const checks = document.querySelectorAll('.srv:checked');
+            if(!name || !phone || checks.length === 0) return alert("Selecciona servicio y rellena tus datos");
+
+            let duration = 0;
+            checks.forEach(c => duration += parseInt(c.dataset.time));
+
+            const bks = JSON.parse(localStorage.getItem('oscar_mena_v9') || '[]');
+            bks.push({ day: currentDay, month: currentMonth, year: currentYear, hour: selectedStartHour, duration, name, phone });
+            localStorage.setItem('oscar_mena_v9', JSON.stringify(bks));
+            alert("¡Cita confirmada!");
+            location.reload();
+        }
+
+        function changeMonth(s) { currentDate.setMonth(currentDate.getMonth()+s); renderCalendar(); }
+
+        function unlockAdmin() {
+            if(prompt("Clave:") === ADMIN_PASS) {
+                document.getElementById('adminPanel').style.display = 'block';
+                const list = document.getElementById('adminList');
+                const bks = JSON.parse(localStorage.getItem('oscar_mena_v9') || '[]');
+                list.innerHTML = bks.map(b => `<div style="border-bottom:1px solid #eee; padding:5px 0;"><b>${b.day}/${b.month+1} ${b.hour}</b> - ${b.name} (${b.duration} min)</div>`).join('');
+            }
+        }
+    </script>
+</body>
+</html>
