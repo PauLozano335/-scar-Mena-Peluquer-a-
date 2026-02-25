@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin | Óscar Mena Barbería</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root { --dorado:#c5a059; --negro:#0d0d0d; --gris:#1a1a1a; --gris2:#222; --blanco:#f5f5f5; --rojo:#c0392b; --verde:#27ae60; }
+        * { box-sizing:border-box; margin:0; padding:0; }
+        body { font-family:'Poppins',sans-serif; background:var(--negro); color:var(--blanco); min-height:100vh; }
+
+        /* LOGIN */
+        #loginScreen { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; padding:20px; }
+        .login-box { background:var(--gris); border:1px solid var(--dorado); padding:40px 30px; border-radius:12px; width:100%; max-width:360px; text-align:center; }
+        .login-box h1 { font-family:'Playfair Display',serif; color:var(--dorado); font-size:1.8rem; margin-bottom:5px; }
+        .login-box p { font-size:0.8rem; opacity:0.5; margin-bottom:30px; letter-spacing:2px; }
+        .login-box input { width:100%; padding:14px; margin-bottom:15px; background:#000; border:1px solid #333; color:#fff; font-size:1rem; border-radius:6px; font-family:'Poppins',sans-serif; }
+        .login-box input:focus { border-color:var(--dorado); outline:none; }
+        .btn-login { background:var(--dorado); color:#000; padding:14px; width:100%; border:none; cursor:pointer; font-size:0.9rem; font-weight:bold; letter-spacing:2px; text-transform:uppercase; border-radius:6px; font-family:'Poppins',sans-serif; }
+        #loginError { color:#e74c3c; font-size:0.8rem; margin-top:10px; display:none; }
+
+        /* DASHBOARD */
+        #dashboard { display:none; }
+        .topbar { background:var(--gris); border-bottom:1px solid #2a2a2a; padding:15px 20px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; }
+        .topbar h2 { font-family:'Playfair Display',serif; color:var(--dorado); font-size:1.2rem; }
+        .btn-logout { background:transparent; border:1px solid #444; color:#aaa; padding:8px 14px; cursor:pointer; font-size:0.75rem; border-radius:4px; font-family:'Poppins',sans-serif; }
+
+        /* STATS */
+        .stats-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(110px,1fr)); gap:12px; padding:20px; }
+        .stat-card { background:var(--gris); border:1px solid #2a2a2a; padding:18px 15px; border-radius:8px; text-align:center; }
+        .stat-card .num { font-family:'Playfair Display',serif; font-size:2rem; color:var(--dorado); }
+        .stat-card .label { font-size:0.7rem; opacity:0.6; letter-spacing:1px; text-transform:uppercase; margin-top:4px; }
+
+        /* FILTROS */
+        .filtros { padding:0 20px 20px; display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+        .filtro-btn { background:var(--gris2); border:1px solid #333; color:var(--blanco); padding:8px 16px; cursor:pointer; font-size:0.75rem; border-radius:20px; font-family:'Poppins',sans-serif; transition:0.2s; }
+        .filtro-btn.active { background:var(--dorado); color:#000; border-color:var(--dorado); font-weight:bold; }
+        .search-box { flex:1; min-width:180px; padding:8px 14px; background:#000; border:1px solid #333; color:#fff; font-size:0.85rem; border-radius:20px; font-family:'Poppins',sans-serif; }
+        .search-box:focus { border-color:var(--dorado); outline:none; }
+
+        /* TABS */
+        .view-tabs { display:flex; padding:0 20px 15px; }
+        .view-tab { padding:8px 20px; background:var(--gris2); border:1px solid #333; color:#aaa; cursor:pointer; font-size:0.8rem; font-family:'Poppins',sans-serif; transition:0.2s; }
+        .view-tab:first-child { border-radius:6px 0 0 6px; }
+        .view-tab:last-child  { border-radius:0 6px 6px 0; }
+        .view-tab.active { background:var(--dorado); color:#000; border-color:var(--dorado); font-weight:bold; }
+
+        /* LISTA */
+        #listaView { padding:0 20px 30px; }
+        .date-label { font-size:0.75rem; color:var(--dorado); letter-spacing:2px; text-transform:uppercase; margin:20px 0 8px; border-bottom:1px solid #222; padding-bottom:6px; }
+        .booking-card { background:var(--gris); border:1px solid #2a2a2a; border-left:3px solid var(--dorado); border-radius:8px; padding:15px; margin-bottom:10px; display:flex; flex-wrap:wrap; justify-content:space-between; align-items:flex-start; gap:10px; }
+        .booking-card.cancelada { border-left-color:var(--rojo); opacity:0.5; }
+        .booking-card.confirmada { border-left-color:var(--verde); }
+        .booking-info .nombre { font-weight:600; font-size:1rem; }
+        .booking-info .detalle { font-size:0.8rem; opacity:0.7; margin-top:4px; }
+        .booking-info .servicios { font-size:0.8rem; color:var(--dorado); margin-top:6px; }
+        .estado-badge { display:inline-block; padding:3px 10px; border-radius:10px; font-size:0.65rem; font-weight:bold; letter-spacing:1px; text-transform:uppercase; margin-top:6px; }
+        .badge-pendiente  { background:rgba(197,160,89,0.2); color:var(--dorado); }
+        .badge-confirmada { background:rgba(39,174,96,0.2); color:var(--verde); }
+        .badge-cancelada  { background:rgba(192,57,43,0.2); color:var(--rojo); }
+        .booking-meta { text-align:right; }
+        .booking-meta .hora-txt { font-size:0.9rem; font-weight:600; color:var(--dorado); }
+        .booking-meta .dur-txt  { font-size:0.75rem; opacity:0.5; margin-top:2px; }
+        .booking-actions { display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; }
+        .btn-accion { padding:6px 12px; border:none; cursor:pointer; font-size:0.7rem; border-radius:4px; font-family:'Poppins',sans-serif; font-weight:600; letter-spacing:1px; text-transform:uppercase; }
+        .btn-confirmar { background:var(--verde); color:#fff; }
+        .btn-cancelar  { background:var(--rojo); color:#fff; }
+        .btn-eliminar  { background:#444; color:#fff; }
+
+        /* AGENDA */
+        #agendaView { display:none; padding:0 20px 30px; }
+        .agenda-nav { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+        .agenda-nav button { background:var(--dorado); border:none; color:#000; cursor:pointer; padding:8px 16px; font-weight:bold; border-radius:4px; font-size:0.8rem; font-family:'Poppins',sans-serif; }
+        .agenda-fecha { font-family:'Playfair Display',serif; color:var(--dorado); font-size:1rem; }
+        .timeline-slot { display:flex; gap:10px; margin-bottom:6px; align-items:flex-start; }
+        .timeline-hora { width:55px; min-width:55px; font-size:0.75rem; color:#555; padding-top:10px; text-align:right; }
+        .timeline-block { flex:1; background:var(--gris2); border-radius:6px; padding:10px 12px; border-left:3px solid #333; min-height:38px; }
+        .timeline-block.ocupado { border-left-color:var(--dorado); background:rgba(197,160,89,0.08); }
+        .timeline-block.ocupado.confirmada { border-left-color:var(--verde); }
+        .timeline-nombre { font-weight:600; font-size:0.85rem; }
+        .timeline-srv { font-size:0.75rem; color:var(--dorado); }
+        .timeline-tel { font-size:0.7rem; opacity:0.5; }
+        .slot-libre { color:#333; font-size:0.75rem; }
+        .empty-msg { text-align:center; padding:60px 20px; opacity:0.4; font-size:0.9rem; }
+
+        #loadingMsg { text-align:center; padding:40px; color:var(--dorado); }
+        .live-dot { display:inline-block; width:8px; height:8px; background:#27ae60; border-radius:50%; margin-right:6px; animation:pulse 1.5s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+    <div class="login-box">
+        <h1>Óscar Mena</h1>
+        <p>PANEL DE ADMINISTRACIÓN</p>
+        <input type="password" id="passwordInput" placeholder="Contraseña" onkeydown="if(event.key==='Enter') doLogin()">
+        <button class="btn-login" onclick="doLogin()">ENTRAR</button>
+        <div id="loginError">Contraseña incorrecta</div>
+    </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+    <div class="topbar">
+        <h2>✂️ Óscar Mena — Reservas</h2>
+        <div style="display:flex;align-items:center;gap:12px;">
+            <span style="font-size:0.7rem;opacity:0.5;"><span class="live-dot"></span>En directo</span>
+            <button class="btn-logout" onclick="logout()">Salir</button>
+        </div>
+    </div>
+
+    <div class="stats-row">
+        <div class="stat-card"><div class="num" id="statHoy">—</div><div class="label">Hoy</div></div>
+        <div class="stat-card"><div class="num" id="statSemana">—</div><div class="label">Esta semana</div></div>
+        <div class="stat-card"><div class="num" id="statPendientes">—</div><div class="label">Pendientes</div></div>
+        <div class="stat-card"><div class="num" id="statTotal">—</div><div class="label">Total</div></div>
+    </div>
+
+    <div class="view-tabs">
+        <div class="view-tab active" id="tabLista"  onclick="switchView('lista')">Lista</div>
+        <div class="view-tab"        id="tabAgenda" onclick="switchView('agenda')">Agenda</div>
+    </div>
+
+    <div class="filtros">
+        <input type="text" class="search-box" id="searchInput" placeholder="🔍 Buscar nombre o teléfono…" oninput="renderLista()">
+        <button class="filtro-btn active" onclick="setFiltro('todas',this)">Todas</button>
+        <button class="filtro-btn" onclick="setFiltro('pendiente',this)">Pendientes</button>
+        <button class="filtro-btn" onclick="setFiltro('confirmada',this)">Confirmadas</button>
+        <button class="filtro-btn" onclick="setFiltro('cancelada',this)">Canceladas</button>
+        <button class="filtro-btn" onclick="setFiltro('hoy',this)">📅 Hoy</button>
+    </div>
+
+    <div id="listaView"><div id="loadingMsg">Conectando con Firebase…</div></div>
+    <div id="agendaView">
+        <div class="agenda-nav">
+            <button onclick="agendaChangeDay(-1)">◀ Ant.</button>
+            <div class="agenda-fecha" id="agendaFecha"></div>
+            <button onclick="agendaChangeDay(1)">Sig. ▶</button>
+        </div>
+        <div id="agendaTimeline"></div>
+    </div>
+</div>
+
+<!-- Firebase SDK -->
+<script type="module">
+    import { initializeApp }  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBNdqm5xgjgsoEvc1gQw0fVuFyGr2uhDmE",
+        authDomain: "oscar-mena-peluqueria.firebaseapp.com",
+        databaseURL: "https://oscar-mena-peluqueria-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "oscar-mena-peluqueria",
+        storageBucket: "oscar-mena-peluqueria.firebasestorage.app",
+        messagingSenderId: "662914229809",
+        appId: "1:662914229809:web:62daea4918d708cd201710"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db  = getDatabase(app);
+
+    window._fb = { db, ref, onValue, update, remove };
+</script>
+
+<script>
+    // ⚠️ CAMBIA ESTA CONTRASEÑA
+    const ADMIN_PASSWORD = "oscar2024";
+
+    let allBookings  = [];   // [{fbKey, ...datos}]
+    let filtroActivo = 'todas';
+    let vistaActual  = 'lista';
+    let agendaDate   = new Date();
+    let fbListener   = null;
+
+    function doLogin() {
+        if (document.getElementById('passwordInput').value === ADMIN_PASSWORD) {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('dashboard').style.display  = 'block';
+            startListener();
+        } else {
+            document.getElementById('loginError').style.display = 'block';
+        }
+    }
+
+    function logout() {
+        document.getElementById('loginScreen').style.display = 'flex';
+        document.getElementById('dashboard').style.display   = 'none';
+        document.getElementById('passwordInput').value = '';
+    }
+
+    function startListener() {
+        const { db, ref, onValue } = window._fb;
+        // onValue escucha en tiempo real: cada vez que alguien reserva, el panel se actualiza solo
+        onValue(ref(db, 'reservas'), snap => {
+            allBookings = [];
+            if (snap.exists()) {
+                snap.forEach(child => {
+                    allBookings.push({ fbKey: child.key, ...child.val() });
+                });
+            }
+            allBookings.sort((a,b) => {
+                if (a.dateKey !== b.dateKey) return a.dateKey.localeCompare(b.dateKey);
+                return a.hora.localeCompare(b.hora);
+            });
+            updateStats();
+            if (vistaActual === 'lista') renderLista();
+            else renderAgenda();
+        });
+    }
+
+    function getTodayKey() {
+        const n = new Date();
+        return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
+    }
+    function getWeekKeys() {
+        const keys=[], n=new Date(), day=n.getDay(), diff=(day===0)?-6:1-day;
+        for(let i=0;i<7;i++){ const d=new Date(n); d.setDate(n.getDate()+diff+i); keys.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`); }
+        return keys;
+    }
+
+    function updateStats() {
+        const today=getTodayKey(), week=getWeekKeys();
+        const activas=allBookings.filter(b=>b.estado!=='cancelada');
+        document.getElementById('statHoy').innerText       = activas.filter(b=>b.dateKey===today).length;
+        document.getElementById('statSemana').innerText    = activas.filter(b=>week.includes(b.dateKey)).length;
+        document.getElementById('statPendientes').innerText= allBookings.filter(b=>b.estado==='pendiente').length;
+        document.getElementById('statTotal').innerText     = allBookings.length;
+    }
+
+    function setFiltro(f, btn) {
+        filtroActivo = f;
+        document.querySelectorAll('.filtro-btn').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        renderLista();
+    }
+
+    function getFiltered() {
+        const q = document.getElementById('searchInput')?.value.toLowerCase()||'';
+        const today = getTodayKey();
+        return allBookings.filter(b => {
+            if (filtroActivo==='hoy' && b.dateKey!==today) return false;
+            if (filtroActivo!=='todas' && filtroActivo!=='hoy' && b.estado!==filtroActivo) return false;
+            if (q && !b.nombre.toLowerCase().includes(q) && !b.telefono.includes(q)) return false;
+            return true;
+        });
+    }
+
+    function renderLista() {
+        const container = document.getElementById('listaView');
+        const filtered  = getFiltered();
+        if (!filtered.length) { container.innerHTML='<div class="empty-msg">No hay reservas que mostrar</div>'; return; }
+
+        const groups = {};
+        filtered.forEach(b => { if(!groups[b.dateKey]) groups[b.dateKey]=[]; groups[b.dateKey].push(b); });
+
+        let html = '';
+        Object.keys(groups).sort().forEach(dk => {
+            html += `<div class="date-label">${formatDateLabel(dk)}</div>`;
+            groups[dk].forEach(b => {
+                html += `
+                <div class="booking-card ${b.estado}">
+                    <div class="booking-info">
+                        <div class="nombre">${b.nombre}</div>
+                        <div class="detalle">📞 ${b.telefono}</div>
+                        <div class="servicios">✂️ ${b.servicios}</div>
+                        <span class="estado-badge badge-${b.estado}">${b.estado}</span>
+                        <div class="booking-actions">
+                            ${b.estado!=='confirmada'?`<button class="btn-accion btn-confirmar" onclick="cambiarEstado('${b.fbKey}','confirmada')">✓ Confirmar</button>`:''}
+                            ${b.estado!=='cancelada' ?`<button class="btn-accion btn-cancelar"  onclick="cambiarEstado('${b.fbKey}','cancelada')">✗ Cancelar</button>`:''}
+                            <button class="btn-accion btn-eliminar" onclick="eliminarReserva('${b.fbKey}')">🗑 Eliminar</button>
+                        </div>
+                    </div>
+                    <div class="booking-meta">
+                        <div class="hora-txt">${b.hora}</div>
+                        <div class="dur-txt">${b.duracion} min</div>
+                    </div>
+                </div>`;
+            });
+        });
+        container.innerHTML = html;
+    }
+
+    function formatDateLabel(dk) {
+        const today    = getTodayKey();
+        const tomorrow = (() => { const d=new Date(); d.setDate(d.getDate()+1); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; })();
+        if (dk===today)    return '📅 Hoy — '+dk;
+        if (dk===tomorrow) return '📆 Mañana — '+dk;
+        const [y,m,d] = dk.split('-');
+        return new Intl.DateTimeFormat('es-ES',{weekday:'long',day:'numeric',month:'long'}).format(new Date(y,m-1,d));
+    }
+
+    async function cambiarEstado(fbKey, nuevoEstado) {
+        const { db, ref, update } = window._fb;
+        await update(ref(db, `reservas/${fbKey}`), { estado: nuevoEstado });
+        // onValue actualizará la lista automáticamente
+    }
+
+    async function eliminarReserva(fbKey) {
+        if (!confirm('¿Eliminar esta reserva definitivamente?')) return;
+        const { db, ref, remove } = window._fb;
+        await remove(ref(db, `reservas/${fbKey}`));
+    }
+
+    /* -------- AGENDA -------- */
+    function switchView(v) {
+        vistaActual = v;
+        document.getElementById('tabLista').classList.toggle('active',  v==='lista');
+        document.getElementById('tabAgenda').classList.toggle('active', v==='agenda');
+        document.getElementById('listaView').style.display  = v==='lista'  ? 'block':'none';
+        document.getElementById('agendaView').style.display = v==='agenda' ? 'block':'none';
+        if (v==='agenda') renderAgenda();
+    }
+
+    function agendaChangeDay(delta) { agendaDate.setDate(agendaDate.getDate()+delta); renderAgenda(); }
+
+    function getSlotsForBooking(startHour, duracion) {
+        const [h,m]=startHour.split(':').map(Number); let sm=h*60+m, slots=[];
+        for(let i=0;i<duracion;i+=15){ let mm=sm+i; slots.push(`${Math.floor(mm/60)}:${(mm%60).toString().padStart(2,'0')}`); }
+        return slots;
+    }
+
+    function renderAgenda() {
+        const y=agendaDate.getFullYear(), m=agendaDate.getMonth(), d=agendaDate.getDate();
+        const dow=agendaDate.getDay();
+        const dk=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        document.getElementById('agendaFecha').innerText =
+            new Intl.DateTimeFormat('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(agendaDate).toUpperCase();
+
+        const tl = document.getElementById('agendaTimeline');
+        if (dow===0||dow===1) { tl.innerHTML='<div class="empty-msg">Día cerrado (domingo/lunes)</div>'; return; }
+
+        const dayBookings = allBookings.filter(b=>b.dateKey===dk && b.estado!=='cancelada');
+        const ranges = (dow===6)?[{s:10,e:14}]:[{s:10,e:13.5},{s:17,e:19.5}];
+        const allSlots=[];
+        ranges.forEach(r=>{ for(let mm=r.s*60;mm<r.e*60;mm+=15) allSlots.push(`${Math.floor(mm/60)}:${(mm%60).toString().padStart(2,'0')}`); });
+
+        const occupiedMap={};
+        dayBookings.forEach(b=>{ getSlotsForBooking(b.hora,b.duracion).forEach(s=>{ occupiedMap[s]=b; }); });
+
+        let html='';
+        allSlots.forEach(slot=>{
+            const b=occupiedMap[slot];
+            if(b && slot===b.hora){
+                html+=`<div class="timeline-slot">
+                    <div class="timeline-hora">${slot}</div>
+                    <div class="timeline-block ocupado ${b.estado}">
+                        <div class="timeline-nombre">${b.nombre}</div>
+                        <div class="timeline-srv">✂️ ${b.servicios} · ${b.duracion}min</div>
+                        <div class="timeline-tel">📞 ${b.telefono}</div>
+                    </div></div>`;
+            } else if(!b){
+                html+=`<div class="timeline-slot">
+                    <div class="timeline-hora">${slot}</div>
+                    <div class="timeline-block"><span class="slot-libre">libre</span></div></div>`;
+            }
+        });
+        tl.innerHTML = html || '<div class="empty-msg">Sin reservas este día</div>';
+    }
+</script>
+</body>
+</html>
