@@ -31,7 +31,6 @@
 
         .hours-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 20px; }
         .hour-card { padding: 10px 2px; background: #111; border: 1px solid #333; text-align: center; cursor: pointer; font-size: 0.75rem; border-radius: 4px; }
-        .hour-card.booked { background: #311; color: #f66; opacity: 0.4; cursor: not-allowed; }
 
         #bookingForm { display: none; margin-top: 25px; border-top: 1px solid #333; padding-top: 20px; }
         .srv-grid { display: grid; grid-template-columns: 1fr; gap: 8px; margin-bottom: 15px; }
@@ -44,10 +43,9 @@
         .galeria img { width: 100%; height: 200px; object-fit: cover; border-radius: 6px; border: 1px solid #333; transition: 0.3s; cursor: zoom-in; }
         .galeria img:hover { border-color: var(--dorado); transform: scale(1.02); }
 
-        /* EFECTO IMAGEN AMPLIADA (MODAL) */
         #imgModal { display: none; position: fixed; z-index: 9999; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); justify-content: center; align-items: center; }
-        #imgModal img { max-width: 90%; max-height: 85%; border: 2px solid var(--dorado); border-radius: 4px; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
-        .close-modal { position: absolute; top: 20px; right: 25px; color: var(--blanco); font-size: 40px; font-weight: bold; cursor: pointer; }
+        #imgModal img { max-width: 90%; max-height: 85%; border: 2px solid var(--dorado); border-radius: 4px; }
+        .close-modal { position: absolute; top: 20px; right: 25px; color: var(--blanco); font-size: 40px; cursor: pointer; }
 
         .mapa-seccion { padding: 40px 15px; background: #000; }
         .map-container { width: 100%; max-width: 800px; margin: auto; border: 1px solid var(--dorado); height: 300px; border-radius: 8px; overflow: hidden; }
@@ -83,7 +81,7 @@
                 <div id="hoursGrid" class="hours-grid"></div>
             </div>
             <div id="bookingForm">
-                <h4 style="margin-top:0; font-size: 1rem;">Selecciona servicios:</h4>
+                <h4 style="margin-top:0; font-size: 1rem;">Servicios:</h4>
                 <div class="srv-grid">
                     <label class="srv-item"><input type="checkbox" class="srv" value="Corte" data-time="20" onchange="actualizarTiempos()"> Corte (20')</label>
                     <label class="srv-item"><input type="checkbox" class="srv" value="Barba" data-time="10" onchange="actualizarTiempos()"> Barba (10')</label>
@@ -93,7 +91,7 @@
                 <p id="totalInfo" style="font-size:0.9rem; color:var(--dorado); font-weight: bold;"></p>
                 <input type="text" id="clientName" placeholder="Tu nombre">
                 <input type="tel" id="clientPhone" placeholder="Tu teléfono">
-                <button class="btn-principal" style="width: 100%;" onclick="saveBooking()">CONFIRMAR CITA</button>
+                <button class="btn-principal" style="width: 100%;" onclick="saveBooking()">ENVIAR POR WHATSAPP</button>
             </div>
         </div>
     </section>
@@ -119,23 +117,17 @@
         <h2 style="font-family:'Playfair Display'; color:var(--dorado); font-size: 1.5rem;">UBICACIÓN</h2>
         <p style="font-size: 0.9rem; margin-bottom: 20px;">Carrer Borriol, 71, Vila-real</p>
         <div class="map-container">
-            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3051.8153400585257!2d-0.1017351!3d39.9416565!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd6000e0717208d7%3A0xc343460f7e4c7604!2sCarrer%20de%20Borriol%2C%2071%2C%2012540%20Vila-real%2C%20Castell%C3%B3!5e0!3m2!1ses!2ses!4v1700000000000" loading="lazy"></iframe>
+            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3056.74127025816!2d-0.10174!3d39.9366!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd601894d0000001%3A0x0!2zMzlCsjU2JzExLjgiTiAwwrAwNicwNi4zIlc!5e0!3m2!1ses!2ses!4v1700000000000" loading="lazy"></iframe>
         </div>
     </section>
 
     <footer>
         <p>Óscar Mena Marcando Estilo</p>
-        <button onclick="unlockAdmin()" style="background:none; border:none; color:#444; margin-top: 15px; cursor:pointer;">Acceso Admin</button>
-        <div id="adminPanel" style="display:none; background:#fff; color:#000; padding:15px; margin-top:20px; text-align:left; border-radius:5px;">
-            <h3>Citas Registradas</h3>
-            <div id="adminList"></div>
-        </div>
     </footer>
 
     <script>
         let currentDate = new Date();
         let currentDay, currentMonth, currentYear, currentDow, selectedStartHour;
-        const ADMIN_PASS = "corte de pelo";
 
         function expandImg(src) {
             document.getElementById('imgFull').src = src;
@@ -148,13 +140,11 @@
             if(div.style.display === 'block') { renderCalendar(); }
         }
 
-        function timeToMins(t) { const [h, m] = t.split(':').map(Number); return h * 60 + m; }
-
         function generateSlots(dow) {
             let slots = [];
             let ranges = (dow === 6) ? [{s:10, e:14}] : [{s:10, e:13.5}, {s:17, e:19.5}];
             ranges.forEach(r => {
-                for(let m = r.s*60; m < r.e*60; m+=10) {
+                for(let m = r.s*60; m < r.e*60; m+=15) {
                     let h = Math.floor(m/60);
                     let mins = m%60;
                     slots.push(`${h}:${mins.toString().padStart(2,'0')}`);
@@ -189,31 +179,22 @@
             document.querySelectorAll('.day').forEach(x => x.classList.remove('selected'));
             el.classList.add('selected');
             currentDay = d; currentMonth = m; currentYear = y; currentDow = dow;
-            const panel = document.getElementById('hoursPanel');
-            panel.style.display = 'block';
+            document.getElementById('hoursPanel').style.display = 'block';
             document.getElementById('bookingForm').style.display = 'none';
             document.getElementById('selectedDateText').innerText = `DÍA ${d}`;
             renderHours();
-            setTimeout(() => { panel.scrollIntoView({behavior:'smooth', block:'start'}); }, 100);
         }
 
         function renderHours() {
             const grid = document.getElementById('hoursGrid');
             grid.innerHTML = '';
-            const bks = JSON.parse(localStorage.getItem('oscar_mena_vfinal') || '[]');
-            const dayBks = bks.filter(b => b.day === currentDay && b.month === currentMonth && b.year === currentYear);
-            
             generateSlots(currentDow).forEach(slot => {
-                const sMins = timeToMins(slot);
-                const isOcc = dayBks.some(b => sMins >= timeToMins(b.hour) && sMins < (timeToMins(b.hour) + b.duration));
                 const card = document.createElement('div');
-                card.className = `hour-card ${isOcc ? 'booked' : ''}`;
+                card.className = 'hour-card';
                 card.innerText = slot;
-                if(!isOcc) card.onclick = () => {
+                card.onclick = () => {
                     selectedStartHour = slot;
-                    const form = document.getElementById('bookingForm');
-                    form.style.display = 'block';
-                    setTimeout(() => { form.scrollIntoView({behavior:'smooth', block:'center'}); }, 100);
+                    document.getElementById('bookingForm').style.display = 'block';
                 };
                 grid.appendChild(card);
             });
@@ -229,27 +210,25 @@
             const name = document.getElementById('clientName').value;
             const phone = document.getElementById('clientPhone').value;
             const checks = document.querySelectorAll('.srv:checked');
+            
             if(!name || !phone || checks.length === 0) return alert("Rellena tus datos.");
-            let duration = 0;
-            checks.forEach(c => duration += parseInt(c.dataset.time));
-            const bks = JSON.parse(localStorage.getItem('oscar_mena_vfinal') || '[]');
-            bks.push({ day: currentDay, month: currentMonth, year: currentYear, hour: selectedStartHour, duration, name, phone });
-            localStorage.setItem('oscar_mena_vfinal', JSON.stringify(bks));
-            alert("¡Cita confirmada!");
+            
+            let servicios = [];
+            checks.forEach(c => servicios.push(c.value));
+            
+            const tuTelefono = "34659418690"; 
+            const mensaje = `¡Hola Óscar! Quiero reservar una cita:%0A` +
+                            `*Nombre:* ${name}%0A` +
+                            `*Teléfono:* ${phone}%0A` +
+                            `*Día:* ${currentDay}/${currentMonth + 1}/${currentYear}%0A` +
+                            `*Hora:* ${selectedStartHour}%0A` +
+                            `*Servicios:* ${servicios.join(", ")}`;
+
+            window.open(`https://wa.me/${tuTelefono}?text=${mensaje}`, '_blank');
             location.reload();
         }
 
         function changeMonth(s) { currentDate.setMonth(currentDate.getMonth()+s); renderCalendar(); }
-
-        function unlockAdmin() {
-            if(prompt("Contraseña:") === ADMIN_PASS) {
-                document.getElementById('adminPanel').style.display = 'block';
-                const list = document.getElementById('adminList');
-                const bks = JSON.parse(localStorage.getItem('oscar_mena_vfinal') || '[]');
-                list.innerHTML = bks.map(b => `<div style="border-bottom:1px solid #ddd; padding:10px 0;"><b>${b.day}/${b.month+1} - ${b.hour}</b><br>${b.name} (${b.phone})</div>`).join('');
-                document.getElementById('adminPanel').scrollIntoView();
-            }
-        }
     </script>
 </body>
 </html>
