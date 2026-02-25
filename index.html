@@ -60,12 +60,12 @@
 </header>
 
 <section class="reserva-container">
-    <button class="btn-principal" onclick="toggleReserva()">RESERVAR CITA</button>
+    <button class="btn-principal" id="btnReservar">RESERVAR CITA</button>
     <div id="reserva-desplegable">
         <div class="month-controls">
-            <button class="month-btn" onclick="changeMonth(-1)">ANT.</button>
+            <button class="month-btn" id="btnAnt">ANT.</button>
             <h3 id="monthDisplay" style="margin:0; color:var(--dorado); font-family:'Playfair Display'; font-size:1rem;"></h3>
-            <button class="month-btn" onclick="changeMonth(1)">SIG.</button>
+            <button class="month-btn" id="btnSig">SIG.</button>
         </div>
         <div class="calendar-grid" id="daysGrid"></div>
         <div id="hoursPanel" style="display:none; margin-top:30px;">
@@ -75,15 +75,15 @@
         <div id="bookingForm">
             <h4 style="margin-top:0; font-size:1rem;">Servicios:</h4>
             <div class="srv-grid">
-                <label class="srv-item"><input type="checkbox" class="srv" value="Corte" data-time="20" onchange="actualizarTiempos()"> Corte (20')</label>
-                <label class="srv-item"><input type="checkbox" class="srv" value="Barba" data-time="10" onchange="actualizarTiempos()"> Barba (10')</label>
-                <label class="srv-item"><input type="checkbox" class="srv" value="Cejas" data-time="5" onchange="actualizarTiempos()"> Cejas (5')</label>
-                <label class="srv-item"><input type="checkbox" class="srv" value="Tinte" data-time="40" onchange="actualizarTiempos()"> Tinte (40')</label>
+                <label class="srv-item"><input type="checkbox" class="srv" value="Corte" data-time="20"> Corte (20')</label>
+                <label class="srv-item"><input type="checkbox" class="srv" value="Barba" data-time="10"> Barba (10')</label>
+                <label class="srv-item"><input type="checkbox" class="srv" value="Cejas" data-time="5"> Cejas (5')</label>
+                <label class="srv-item"><input type="checkbox" class="srv" value="Tinte" data-time="40"> Tinte (40')</label>
             </div>
             <p id="totalInfo" style="font-size:0.9rem; color:var(--dorado); font-weight:bold;"></p>
             <input type="text" id="clientName" placeholder="Tu nombre">
             <input type="tel" id="clientPhone" placeholder="Tu teléfono">
-            <button class="btn-principal" style="width:100%;" onclick="saveBooking()">CONFIRMAR RESERVA</button>
+            <button class="btn-principal" style="width:100%;" id="btnConfirmar">CONFIRMAR RESERVA</button>
         </div>
         <div class="success-banner" id="successBanner"></div>
     </div>
@@ -118,9 +118,9 @@
     <p>Óscar Mena Marcando Estilo</p>
 </footer>
 
-<!-- Firebase SDK (módulo ES) -->
+<!-- Todo en UN SOLO script type="module" para evitar problemas de timing -->
 <script type="module">
-    import { initializeApp }       from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getDatabase, ref, push, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
     const firebaseConfig = {
@@ -136,34 +136,15 @@
     const app = initializeApp(firebaseConfig);
     const db  = getDatabase(app);
 
-    // Exponer al scope global para el script clásico de abajo
-    window._fb = { db, ref, push, get };
-</script>
-
-<script>
+    // ── Estado ──────────────────────────────────────────────
     let currentDate = new Date();
     let currentDay, currentMonth, currentYear, currentDow, selectedStartHour;
     let bookedSlots = {};
 
-    function expandImg(src) {
-        document.getElementById('imgFull').src = src;
-        document.getElementById('imgModal').style.display = 'flex';
-    }
-
-    async function toggleReserva() {
-        const div = document.getElementById('reserva-desplegable');
-        const open = div.style.display === 'block';
-        div.style.display = open ? 'none' : 'block';
-        if (!open) {
-            await loadBookedSlots();
-            renderCalendar();
-        }
-    }
-
+    // ── Helpers Firebase ────────────────────────────────────
     async function loadBookedSlots() {
         bookedSlots = {};
         try {
-            const { db, ref, get } = window._fb;
             const snap = await get(ref(db, 'reservas'));
             if (snap.exists()) {
                 snap.forEach(child => {
@@ -180,9 +161,9 @@
 
     function getSlotsForBooking(startHour, duracion) {
         const [h, m] = startHour.split(':').map(Number);
-        let startMin = h * 60 + m, slots = [];
+        let sm = h * 60 + m, slots = [];
         for (let i = 0; i < duracion; i += 15) {
-            let mm = startMin + i;
+            let mm = sm + i;
             slots.push(`${Math.floor(mm/60)}:${(mm%60).toString().padStart(2,'0')}`);
         }
         return slots;
@@ -198,6 +179,7 @@
         return slots;
     }
 
+    // ── Calendario ──────────────────────────────────────────
     function renderCalendar() {
         const grid = document.getElementById('daysGrid');
         grid.innerHTML = ['L','M','X','J','V','S','D'].map(d=>`<div class="day-header">${d}</div>`).join('');
@@ -213,7 +195,7 @@
             div.className = 'day';
             const dow = new Date(y,m,d).getDay();
             if (dow===0||dow===1) div.classList.add('disabled');
-            else div.onclick = () => selectDay(d,m,y,dow,div);
+            else div.addEventListener('click', () => selectDay(d,m,y,dow,div));
             div.innerText = d;
             grid.appendChild(div);
         }
@@ -242,13 +224,13 @@
             if (occupied.includes(slot)) {
                 card.classList.add('ocupado');
             } else {
-                card.onclick = () => {
+                card.addEventListener('click', () => {
                     document.querySelectorAll('.hour-card').forEach(c=>c.classList.remove('selected-hour'));
                     card.classList.add('selected-hour');
                     selectedStartHour = slot;
                     document.getElementById('bookingForm').style.display = 'block';
                     document.getElementById('successBanner').style.display = 'none';
-                };
+                });
             }
             grid.appendChild(card);
         });
@@ -283,8 +265,11 @@
             createdAt: new Date().toISOString()
         };
 
+        const btn = document.getElementById('btnConfirmar');
+        btn.disabled = true;
+        btn.innerText = 'Guardando…';
+
         try {
-            const { db, ref, push } = window._fb;
             await push(ref(db, 'reservas'), booking);
 
             document.getElementById('bookingForm').style.display = 'none';
@@ -297,13 +282,38 @@
         } catch(e) {
             console.error(e);
             alert("Error al guardar. Comprueba tu conexión e inténtalo de nuevo.");
+        } finally {
+            btn.disabled = false;
+            btn.innerText = 'CONFIRMAR RESERVA';
         }
     }
 
-    function changeMonth(s) {
-        currentDate.setMonth(currentDate.getMonth()+s);
-        renderCalendar();
-    }
+    // ── Galería ─────────────────────────────────────────────
+    window.expandImg = function(src) {
+        document.getElementById('imgFull').src = src;
+        document.getElementById('imgModal').style.display = 'flex';
+    };
+
+    // ── Eventos ─────────────────────────────────────────────
+    document.getElementById('btnReservar').addEventListener('click', async () => {
+        const div = document.getElementById('reserva-desplegable');
+        const open = div.style.display === 'block';
+        div.style.display = open ? 'none' : 'block';
+        if (!open) {
+            await loadBookedSlots();
+            renderCalendar();
+        }
+    });
+
+    document.getElementById('btnAnt').addEventListener('click', () => {
+        currentDate.setMonth(currentDate.getMonth()-1); renderCalendar();
+    });
+    document.getElementById('btnSig').addEventListener('click', () => {
+        currentDate.setMonth(currentDate.getMonth()+1); renderCalendar();
+    });
+    document.getElementById('btnConfirmar').addEventListener('click', saveBooking);
+    document.querySelectorAll('.srv').forEach(cb => cb.addEventListener('change', actualizarTiempos));
+
 </script>
 </body>
 </html>
