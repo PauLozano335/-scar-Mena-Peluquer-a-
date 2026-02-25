@@ -87,7 +87,7 @@
                 <div class="srv-grid">
                     <label class="srv-item"><input type="checkbox" class="srv" value="Corte" data-time="20" onchange="actualizarTiempos()"> Corte (20')</label>
                     <label class="srv-item"><input type="checkbox" class="srv" value="Barba" data-time="10" onchange="actualizarTiempos()"> Barba (10')</label>
-                    <label class="srv-item"><input type="checkbox" class="srv" value="Cejas" data-time="10" onchange="actualizarTiempos()"> Cejas (10')</label>
+                    <label class="srv-item"><input type="checkbox" class="srv" value="Cejas" data-time="5" onchange="actualizarTiempos()"> Cejas (5')</label>
                     <label class="srv-item"><input type="checkbox" class="srv" value="Tinte" data-time="40" onchange="actualizarTiempos()"> Tinte (40')</label>
                 </div>
                 <p id="totalInfo" style="font-size:0.9rem; color:var(--dorado); font-weight: bold;"></p>
@@ -111,7 +111,7 @@
     </section>
 
     <div id="imgModal" onclick="this.style.display='none'">
-        <span class="close-modal">&times;</span>
+        <span class="close-modal">×</span>
         <img id="imgFull" src="">
     </div>
 
@@ -137,7 +137,6 @@
         let currentDay, currentMonth, currentYear, currentDow, selectedStartHour;
         const ADMIN_PASS = "corte de pelo";
 
-        // Función para ampliar imagen
         function expandImg(src) {
             document.getElementById('imgFull').src = src;
             document.getElementById('imgModal').style.display = 'flex';
