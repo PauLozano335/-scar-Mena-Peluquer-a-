@@ -118,7 +118,6 @@
     <p>Óscar Mena Marcando Estilo</p>
 </footer>
 
-<!-- Todo en UN SOLO script type="module" para evitar problemas de timing -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getDatabase, ref, push, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
@@ -162,7 +161,7 @@
     function getSlotsForBooking(startHour, duracion) {
         const [h, m] = startHour.split(':').map(Number);
         let sm = h * 60 + m, slots = [];
-        for (let i = 0; i < duracion; i += 15) {
+        for (let i = 0; i < duracion; i += 20) {
             let mm = sm + i;
             slots.push(`${Math.floor(mm/60)}:${(mm%60).toString().padStart(2,'0')}`);
         }
@@ -171,9 +170,11 @@
 
     function generateSlots(dow) {
         let slots = [];
-        const ranges = (dow === 6) ? [{s:10,e:14}] : [{s:10,e:13.5},{s:17,e:19.5}];
+        // Rango de mañana: 10:00 a 13:00 (s:10, e:13)
+        // Rango de tarde: 17:00 a 19:00 (s:17, e:19)
+        const ranges = (dow === 6) ? [{s:10,e:13}] : [{s:10,e:13},{s:17,e:19}];
         ranges.forEach(r => {
-            for (let m = r.s*60; m < r.e*60; m+=15)
+            for (let m = r.s*60; m < r.e*60; m+=20)
                 slots.push(`${Math.floor(m/60)}:${(m%60).toString().padStart(2,'0')}`);
         });
         return slots;
@@ -201,6 +202,7 @@
         }
     }
 
+    // ── Seleccionar Día ──
     function selectDay(d,m,y,dow,el) {
         document.querySelectorAll('.day').forEach(x=>x.classList.remove('selected'));
         el.classList.add('selected');
@@ -251,7 +253,8 @@
 
         let servicios = [], duracionTotal = 0;
         checks.forEach(c => { servicios.push(c.value); duracionTotal += parseInt(c.dataset.time); });
-        duracionTotal = Math.ceil(duracionTotal/15)*15;
+        // Redondeo de duración adaptado a múltiplos de 20 minutos
+        duracionTotal = Math.ceil(duracionTotal/20)*20;
 
         const dateKey = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}-${String(currentDay).padStart(2,'0')}`;
 
